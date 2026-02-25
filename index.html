@@ -144,14 +144,136 @@
 
     .cam-status.ok  { color: #1e5c1e; }
     .cam-status.err { color: #5c1e1e; }
+
+    /* weather widget */
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    #header h1 { margin-bottom: 0; }
+
+    #weather {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #weather-icon { display: flex; align-items: center; }
+
+    #weather-temp, #weather-time {
+      font-family: 'Courier New', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+    }
+
+    #weather-temp { color: #555; }
+    #weather-time { color: #383838; }
+    .w-sep        { color: #222; font-size: 0.68rem; }
   </style>
 </head>
 <body>
-  <h1>Fort Worth Traffic Cams</h1>
+  <div id="header">
+    <h1>Fort Worth Traffic Cams</h1>
+    <div id="weather">
+      <span id="weather-icon"></span>
+      <span id="weather-temp"></span>
+      <span class="w-sep">·</span>
+      <span id="weather-time"></span>
+    </div>
+  </div>
   <div id="grid"></div>
 
   <script>
     const REFRESH_MS = 10000;
+
+    // ── Weather widget ──────────────────────────────────────────────────────
+
+    const ICONS = {
+      sun: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8941a" stroke-width="1.5" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4"/>
+        <line x1="12" y1="2"  x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+        <line x1="2"  y1="12" x2="5"  y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+        <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+        <line x1="19.78" y1="4.22" x2="17.66" y2="6.34"/><line x1="6.34" y1="17.66" x2="4.22" y2="19.78"/>
+      </svg>`,
+      moon: `<svg width="18" height="18" viewBox="0 0 24 24">
+        <defs><clipPath id="mc"><circle cx="12" cy="12" r="10"/></clipPath></defs>
+        <circle cx="12" cy="12" r="8" fill="#8890a8"/>
+        <circle cx="16" cy="12" r="7" fill="#0d0d0d" clip-path="url(#mc)"/>
+      </svg>`,
+      cloud: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5a5a5a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M17.5 19H9a7 7 0 113.5-13.1A5 5 0 0117.5 9a3.5 3.5 0 010 10z"/>
+      </svg>`,
+      'partly-cloudy': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="8" r="3.5" stroke="#c8941a"/>
+        <line x1="8" y1="1"  x2="8" y2="3"  stroke="#c8941a"/><line x1="8" y1="13" x2="8" y2="15" stroke="#c8941a"/>
+        <line x1="1" y1="8"  x2="3" y2="8"  stroke="#c8941a"/><line x1="13" y1="8" x2="15" y2="8" stroke="#c8941a"/>
+        <line x1="3.05" y1="3.05" x2="4.46" y2="4.46" stroke="#c8941a"/>
+        <line x1="11.54" y1="11.54" x2="12.95" y2="12.95" stroke="#c8941a"/>
+        <line x1="12.95" y1="3.05" x2="11.54" y2="4.46" stroke="#c8941a"/>
+        <line x1="4.46" y1="11.54" x2="3.05" y2="12.95" stroke="#c8941a"/>
+        <path d="M20 18h-7A5 5 0 018.5 10a4 4 0 017.5 1.5 3 3 0 014 6.5z" stroke="#5a5a5a"/>
+      </svg>`,
+      rain: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a80b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 15.25"/>
+        <line x1="8"  y1="19" x2="8"  y2="21"/><line x1="8"  y1="13" x2="8"  y2="15"/>
+        <line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/>
+        <line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/>
+      </svg>`,
+      snow: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6890b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 15.25"/>
+        <line x1="8"  y1="16" x2="8"  y2="20"/><line x1="6"  y1="17" x2="10" y2="19"/><line x1="6"  y1="19" x2="10" y2="17"/>
+        <line x1="16" y1="16" x2="16" y2="20"/><line x1="14" y1="17" x2="18" y2="19"/><line x1="14" y1="19" x2="18" y2="17"/>
+      </svg>`,
+      fog: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#505050" stroke-width="1.5" stroke-linecap="round">
+        <line x1="3" y1="7"  x2="21" y2="7"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="5" y1="17" x2="19" y2="17"/>
+      </svg>`,
+      storm: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 16.9A5 5 0 0018 7h-1.26A8 8 0 104 14.74" stroke="#806898"/>
+        <polyline points="13 11 9 17 15 17 11 23" stroke="#c8a818"/>
+      </svg>`,
+    };
+
+    function wxIconKey(code, isDay) {
+      if (code === 0)  return isDay ? 'sun' : 'moon';
+      if (code <= 2)   return isDay ? 'partly-cloudy' : 'cloud';
+      if (code === 3)  return 'cloud';
+      if (code <= 48)  return 'fog';
+      if (code <= 67)  return 'rain';
+      if (code <= 77)  return 'snow';
+      if (code <= 82)  return 'rain';
+      if (code <= 86)  return 'snow';
+      return 'storm';
+    }
+
+    async function updateWeather() {
+      try {
+        const res = await fetch(
+          'https://api.open-meteo.com/v1/forecast?latitude=32.7555&longitude=-97.3308' +
+          '&current=temperature_2m,weathercode,is_day&temperature_unit=fahrenheit&timezone=America/Chicago'
+        );
+        const { current: w } = await res.json();
+        const code  = w.weathercode ?? w.weather_code;
+        const isDay = w.is_day === 1;
+        const temp  = Math.round(w.temperature_2m);
+        document.getElementById('weather-icon').innerHTML = ICONS[wxIconKey(code, isDay)];
+        document.getElementById('weather-temp').textContent = `${temp}°F`;
+      } catch (e) { /* fail silently */ }
+    }
+
+    function fwTime() {
+      return new Date().toLocaleTimeString('en-US', {
+        timeZone: 'America/Chicago',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      });
+    }
+
+    // ── Camera cards ────────────────────────────────────────────────────────
 
     // card registry: id -> { img, status, lastOk }
     const cards = {};
@@ -224,8 +346,9 @@
       status.className = 'cam-status ok';
     }
 
-    // 1s ticker: updates "Xs ago" text and stale class on all cards
+    // 1s ticker: time display + card age/stale
     setInterval(() => {
+      document.getElementById('weather-time').textContent = fwTime();
       const now = Date.now();
       for (const entry of Object.values(cards)) {
         if (entry.lastOk === null) continue;
@@ -272,6 +395,9 @@
         }
 
         refreshAll();
+        updateWeather();
+        setInterval(updateWeather, 10 * 60 * 1000);
+        document.getElementById('weather-time').textContent = fwTime();
       } catch (e) {
         document.getElementById('grid').textContent = 'Failed to load cameras.';
       }
