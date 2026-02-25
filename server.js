@@ -43,11 +43,17 @@ async function getDistrictData() {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
-  // Serve index.html
+  // Serve static files
   if (url.pathname === '/' || url.pathname === '/index.html') {
     const html = fs.readFileSync(path.join(__dirname, 'index.html'));
     res.writeHead(200, { 'Content-Type': 'text/html' });
     return res.end(html);
+  }
+
+  if (url.pathname === '/favicon.svg') {
+    const svg = fs.readFileSync(path.join(__dirname, 'favicon.svg'));
+    res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+    return res.end(svg);
   }
 
   // CORS proxy: /api/snapshot?id=IH35W%20%40%20Berry
