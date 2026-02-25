@@ -2,7 +2,7 @@
 
 Live traffic camera viewer for the IH-35W corridor near Magnolia Ave, Fort Worth — powered by the TxDOT ITS API.
 
-![screenshot](https://github.com/isaacpeterklein/fw-cams/assets/screenshot.png)
+![screenshot](screenshot.png)
 
 ## Running
 
