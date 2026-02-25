@@ -1,0 +1,12 @@
+{
+  "name": "fw-cams",
+  "version": "1.0.0",
+  "description": "Fort Worth traffic cam viewer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
